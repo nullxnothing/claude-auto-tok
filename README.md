@@ -17,6 +17,23 @@
 
 ---
 
+## Table of Contents
+
+- [Demo](#demo)
+- [How It Works](#how-it-works)
+- [Agents](#agents)
+- [Quick Start](#quick-start)
+- [Video Templates](#video-templates)
+- [Remotion Studio](#remotion-studio)
+- [Pipeline Architecture](#pipeline-architecture)
+- [Revision Loop](#revision-loop)
+- [Failure Modes](#failure-modes)
+- [Automation (2 Videos/Day)](#automation-2-videosday)
+- [Cost Per Video](#cost-per-video)
+- [Requirements](#requirements)
+
+---
+
 ## Demo
 
 > Sample output from `pnpm swarm:run "build a SaaS in a weekend with Claude Code"`
@@ -42,14 +59,14 @@ Topic In ──► Researcher ──► Scriptwriter ──► Voice Producer �
 
 ## Agents
 
-| # | Agent | Model | Job |
-|---|-------|-------|-----|
-| 1 | **Researcher** | Gemini 2.5 Flash | Pulls top 20 TikToks via ScrapeCreators, scores hooks, checks trend timing (rising/peak/saturated), gates the pipeline with GO/WAIT/PIVOT |
-| 2 | **Scriptwriter** | Claude Sonnet (OpenRouter) | Generates 3 hook variants using proven formulas (contradiction, knowledge gap, bold claim, POV), writes full script with overlays and captions |
-| 3 | **Voice Producer** | ElevenLabs v3 | Synthesizes voiceover with word-level timestamps for precise subtitle sync |
-| 4 | **Visual Director** | Claude + Gemini Imagen 4 | Plans scene backgrounds, fetches B-roll from Pexels (or generates via Kling AI), creates thumbnails, selects color palette and template |
-| 5 | **Composer** | Remotion | Renders final 9:16 video with bold word captions, scene transitions, progress bar, background music, and CTA card |
-| 6 | **Reviewer** | Gemini 2.5 Pro | Watches the rendered video, scores hook/completion/thumbnail/SEO on a 20-point rubric, approves or sends back for revision (up to 2 loops) |
+| # | Agent | Model (pinned) | Job |
+|---|-------|----------------|-----|
+| 1 | **Researcher** | `gemini-2.5-flash` | Pulls top 20 TikToks via ScrapeCreators, scores hooks, checks trend timing (rising/peak/saturated), gates the pipeline with GO/WAIT/PIVOT |
+| 2 | **Scriptwriter** | `claude-sonnet-4-20250514` via OpenRouter | Generates 3 hook variants using proven formulas (contradiction, knowledge gap, bold claim, POV), writes full script with overlays and captions |
+| 3 | **Voice Producer** | ElevenLabs v3 (`eleven_multilingual_v2`) | Synthesizes voiceover with word-level timestamps for precise subtitle sync |
+| 4 | **Visual Director** | `claude-sonnet-4-20250514` + `imagen-4` | Plans scene backgrounds, fetches B-roll from Pexels (or generates via Kling AI), creates thumbnails, selects color palette and template |
+| 5 | **Composer** | Remotion 4.x | Renders final 9:16 video with bold word captions, scene transitions, progress bar, background music, and CTA card |
+| 6 | **Reviewer** | `gemini-2.5-pro` | Watches the rendered video, scores hook/completion/thumbnail/SEO on a 20-point rubric, approves or sends back for revision (up to 2 loops) |
 
 ---
 
@@ -165,6 +182,26 @@ The pipeline self-corrects:
 5. Max 2 revision loops, then outputs for manual review
 
 Revision targets are specific: "scriptwriter", "visual_director", or "both" — agents only redo their part.
+
+---
+
+## Failure Modes
+
+Things that actually break in production and how the pipeline handles them:
+
+| Failure | Cause | What Happens | Mitigation |
+|---------|-------|--------------|------------|
+| **Researcher returns WAIT/PIVOT** | Trend is saturated or too niche | Pipeline halts early, no wasted API calls | Retry with a different topic or wait for trend cycle |
+| **Hook scoring below threshold** | Claude generates a weak/generic hook | Scriptwriter reruns with tighter constraints | 3 variants are generated — if all score low, pipeline stops with a log |
+| **ElevenLabs rate limit** | Free tier: 10K chars/month | Voice producer throws, pipeline exits | Monitor usage in ElevenLabs dashboard, upgrade tier, or queue videos |
+| **Pexels returns no results** | Niche topic with bad search terms | Visual director falls back to solid color backgrounds | Kling AI as secondary source (if configured), or manual B-roll in `public/broll/` |
+| **Kling AI timeout** | AI video generation takes 2-5 min per clip | Composer hangs waiting for asset | 60s timeout with fallback to Pexels stills; disable Kling for budget runs |
+| **Remotion render crash** | Missing assets, corrupt audio, or Chrome OOM | Composer exits with render error log | Check `output/debug/` for frame-level logs; ensure Chrome/Chromium is installed |
+| **Audio/subtitle sync drift** | Word-level timestamps misalign with video duration | Captions appear early or late | Voice producer validates total duration against script length before passing to composer |
+| **Reviewer scores < 12 twice** | Fundamental issue with topic or script quality | Pipeline exits after 2 revision loops | Output saved to `output/needs-review/` for manual editing; check `review_score.json` for specific failures |
+| **ScrapeCreators API down** | Third-party service outage | Researcher fails immediately | Pipeline logs error and exits; no silent fallback to prevent stale trend data |
+
+**General debugging:** Every agent writes structured logs to `output/debug/<agent>.json`. Start there.
 
 ---
 
