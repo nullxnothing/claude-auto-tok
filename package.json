@@ -1,0 +1,39 @@
+{
+  "name": "claude-auto-tok",
+  "version": "1.0.0",
+  "description": "AI-powered TikTok content factory — 6 autonomous agents, one command, one video",
+  "main": "index.js",
+  "scripts": {
+    "swarm:run": "ts-node src/orchestrator.ts",
+    "remotion:studio": "npx remotion studio src/remotion/Root.tsx",
+    "remotion:render": "npx remotion render src/remotion/Root.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.81.0",
+    "@google/generative-ai": "^0.24.1",
+    "@remotion/captions": "^4.0.443",
+    "@remotion/media-utils": "^4.0.443",
+    "dotenv": "^17.3.1",
+    "jsonwebtoken": "^9.0.3",
+    "node-fetch": "^3.3.2",
+    "playwright": "^1.59.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "^4.0.443",
+    "@remotion/cli": "^4.0.443",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "remotion": "^4.0.443",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}

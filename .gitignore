@@ -1,0 +1,35 @@
+node_modules/
+dist/
+.env
+
+# Generated output
+output/
+
+# Generated assets — user provides their own bg music and B-roll populates at runtime
+public/*.mp3
+public/*.mp4
+public/*.png
+public/*.jpg
+public/broll/
+public/stock-*
+public/scene-*
+public/screenshot-*
+public/thumbnail-*
+
+# Keep directory structure
+!public/.gitkeep
+!public/broll/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Lock files (users install fresh)
+pnpm-lock.yaml
